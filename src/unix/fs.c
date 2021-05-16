@@ -118,7 +118,7 @@ extern char *mkdtemp(char *template); /* See issue #740 on AIX < 7 */
   do {                                                                        \
     assert(path != NULL);                                                     \
     if (cb == NULL) {                                                         \
-      req->path = path;                                                       \
+      req>path = path;                                                       \
     } else {                                                                  \
       req->path = uv__strdup(path);                                           \
       if (req->path == NULL)                                                  \
