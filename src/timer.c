@@ -56,7 +56,9 @@ static int timer_less_than(const struct heap_node* ha,
 
 
 int uv_timer_init(uv_loop_t* loop, uv_timer_t* handle) {
+  // 初始化基类
   uv__handle_init(loop, (uv_handle_t*)handle, UV_TIMER);
+  // 初始化 timer_handle 特有属性
   handle->timer_cb = NULL;
   handle->timeout = 0;
   handle->repeat = 0;
@@ -76,6 +78,7 @@ int uv_timer_start(uv_timer_t* handle,
   if (uv__is_active(handle))
     uv_timer_stop(handle);
 
+  // 计算超时时间，为绝对值
   clamped_timeout = handle->loop->time + timeout;
   if (clamped_timeout < timeout)
     clamped_timeout = (uint64_t) -1;
@@ -169,12 +172,19 @@ void uv__run_timers(uv_loop_t* loop) {
     if (heap_node == NULL)
       break;
 
+    // 根据一个成员变量的地址，获取结构体的地址
     handle = container_of(heap_node, uv_timer_t, heap_node);
+    // 最小的节点都没有超时，则后面的节点也不会超时
     if (handle->timeout > loop->time)
       break;
 
+    // 删除该节点
     uv_timer_stop(handle);
+    /**
+     * 尝试重新插入二叉堆，如果需要的话（比如设置了 repeat）
+     */
     uv_timer_again(handle);
+    // 执行回调函数
     handle->timer_cb(handle);
   }
 }

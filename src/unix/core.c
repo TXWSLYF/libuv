@@ -371,14 +371,21 @@ int uv_run(uv_loop_t* loop, uv_run_mode mode) {
   int r;
   int ran_pending;
 
+  // 在执行 uv_run 之前，需要先提交任务到 loop，否则直接退出 loop 了
   r = uv__loop_alive(loop);
   if (!r)
     uv__update_time(loop);
 
   while (r != 0 && loop->stop_flag == 0) {
+    // 更新 loop 的 time 字段
     uv__update_time(loop);
+    // 执行超时回调
     uv__run_timers(loop);
+    /**
+     * 执行 pending 回调，ran_pending 代表 pending 队列是否为空
+     */
     ran_pending = uv__run_pending(loop);
+    // 继续执行各种队列
     uv__run_idle(loop);
     uv__run_prepare(loop);
 
