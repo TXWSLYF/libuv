@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <uv.h>
+#include <iostream>
 
 #define DEFAULT_PORT 7000
 #define DEFAULT_BACKLOG 128
@@ -63,6 +64,7 @@ void echo_read(uv_stream_t *client, ssize_t nread, const uv_buf_t *buf)
 
 void on_new_connection(uv_stream_t *server, int status)
 {
+    std::cout << server->io_watcher.fd << std::endl;
     if (status < 0)
     {
         fprintf(stderr, "New connection error %s\n", uv_strerror(status));
@@ -72,6 +74,7 @@ void on_new_connection(uv_stream_t *server, int status)
 
     uv_tcp_t *client = (uv_tcp_t *)malloc(sizeof(uv_tcp_t));
     uv_tcp_init(loop, client);
+    // uv_accept 主要干的事情，就是将 server.accepted_fd 传递给 client->io_watcher.fd
     if (uv_accept(server, (uv_stream_t *)client) == 0)
     {
         uv_read_start((uv_stream_t *)client, alloc_buffer, echo_read);
@@ -94,7 +97,10 @@ int main()
 
     uv_ip4_addr("0.0.0.0", DEFAULT_PORT, &addr);
 
+    // 这一步会新建 socket，并绑定端口，server.io_watcher.fd 会被赋值
     uv_tcp_bind(&server, (const struct sockaddr *)&addr, 0);
+
+    // uv_listen 会将 server.io_watcher.cb 从初始的 uv__stream_io 替换为 uv__server_io
     int r = uv_listen((uv_stream_t *)&server, DEFAULT_BACKLOG, on_new_connection);
     if (r)
     {

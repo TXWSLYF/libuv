@@ -1799,6 +1799,7 @@ struct uv_loop_s {
   void* data;
   /* Loop reference counting. */
   unsigned int active_handles;
+  // 双向链表，用来查找当前 handle
   void* handle_queue[2];
   union {
     void* unused;
